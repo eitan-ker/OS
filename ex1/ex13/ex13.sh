@@ -1,23 +1,24 @@
 #!/bin/bash
-num=0
-Factorial()
-{
 
 for d in $(ls $1 | sort);
 do
-echo $1
     if [[ $d = $2 ]]
         then
-            # return
-            echo $d "________________"
-            break
+            cat $1/$d;
+            echo
     else
         # recursive call
         if [[ $d != *"."* ]]
             then
-                Factorial $1/$d $2
+                for n in $(ls $1/$d | sort);
+                do
+                    if [[ $n = $2 ]]
+                    then
+                        cat $1/$d/$n;
+                        echo
+                    fi    
+                done
         fi
     fi
 done
-}
-Factorial $1 $2
+
