@@ -1,4 +1,21 @@
 #!/bin/bash
-line=0
-ls $1 | grep .txt | sort | sed 's/.*/& is a file/'
-ls $1 | grep -F -v "." | sort | sed 's/.*/& is a directory/'
+cd $1
+n=1
+
+for d in $(ls -1v);
+do
+    if [[ $d = *".txt"* ]]
+        then
+            echo $n "$d is a file"
+            n=$[$n+1]
+    fi
+done
+
+for d in $(ls -1v);
+do
+    if [[ $d != *"."* ]]
+        then
+            echo $n "$d is a directory"
+            n=$[$n+1]
+    fi
+done
