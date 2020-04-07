@@ -1,4 +1,7 @@
 #!/bin/bash
+# Eitan Kerzhner
+# 205697139
+
 input=$1
 numLine=0
 while IFS= read -r line

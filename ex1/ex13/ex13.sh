@@ -1,4 +1,6 @@
 #!/bin/bash
+# Eitan Kerzhner
+# 205697139
 
 for d in $(ls $1 | sort);
 do

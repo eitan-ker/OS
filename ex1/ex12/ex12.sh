@@ -1,4 +1,7 @@
 #!/bin/bash
+# Eitan Kerzhner
+# 205697139
+
 cd $1
 n=1
 
