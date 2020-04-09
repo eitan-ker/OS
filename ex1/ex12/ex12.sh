@@ -2,10 +2,10 @@
 # Eitan Kerzhner
 # 205697139
 
-cd $1
+# line counter
 n=1
-
-for d in $(ls -1v);
+# printing all files
+for d in $(ls $1 -1v);
 do
     if [[ $d = *".txt"* ]]
         then
@@ -13,8 +13,8 @@ do
             n=$[$n+1]
     fi
 done
-
-for d in $(ls -1v);
+# printing all directories
+for d in $(ls $1 -1v);
 do
     if [[ $d != *"."* ]]
         then
