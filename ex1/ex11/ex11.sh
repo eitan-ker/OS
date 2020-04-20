@@ -6,7 +6,7 @@ input=$1
 # line counter
 numLine=0
 # line reader
-while IFS= read -r line
+while IFS="" read -r line || [ -n "$line" ]
 do
 # num of words
     words=0
