@@ -1,0 +1,22 @@
+#IncludeRegexLine: ^[ 	]*[#%][ 	]*(include|import)[ 	]*[<"]([^">]+)([">])
+
+#IncludeRegexScan: ^.*$
+
+#IncludeRegexComplain: ^$
+
+#IncludeRegexTransform: 
+
+/home/eizzker/Desktop/OS/ex2/ex2/main.c
+stdio.h
+-
+stdbool.h
+-
+unistd.h
+-
+string.h
+-
+stdlib.h
+-
+sys/types.h
+-
+
