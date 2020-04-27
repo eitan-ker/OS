@@ -32,6 +32,22 @@ int main() {
             temp = strtok(NULL, " ");
         }
         comArr[i] = NULL;
+        if (!strcmp(comArr[0], "jobs")) {
+            printf("jobs\n");
+            // jobs func
+        } else if (!strcmp(comArr[0], "history")) {
+            printf("history\n");
+            // history func
+        } else if (!strcmp(comArr[0], "cd")) {
+            printf("cd\n");
+            // cd func
+        } else if (!strcmp(comArr[0], "exit")) {
+            printf("exit\n");
+            // exit func
+        } else {
+            printf("else\n");
+            // exec func
+        }
     }
     return 0;
 }
