@@ -5,6 +5,7 @@
 #include <stdlib.h>
 #include <sys/types.h>
 
+int cd (char* command[], int iter);
 
 int main() {
     // initialization
@@ -41,6 +42,7 @@ int main() {
         } else if (!strcmp(comArr[0], "cd")) {
             printf("cd\n");
             // cd func
+            cd(comArr, i);
         } else if (!strcmp(comArr[0], "exit")) {
             printf("exit\n");
             // exit func
@@ -50,4 +52,8 @@ int main() {
         }
     }
     return 0;
+}
+
+int cd (char* command[], int iter) {
+
 }
