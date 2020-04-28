@@ -4,8 +4,13 @@
 #include <string.h>
 #include <stdlib.h>
 #include <sys/types.h>
+#include <signal.h>
 
 int cd(char *command[], int iter);
+
+void exitFunc();
+
+void exec(char *command[]);
 
 int main() {
     // initialization
@@ -43,8 +48,10 @@ int main() {
             cd(comArr, i);
         } else if (!strcmp(comArr[0], "exit")) {
             // exit func
+            exitFunc();
         } else {
             // exec func
+            exec(comArr);
         }
     }
     return 0;
@@ -52,7 +59,7 @@ int main() {
 
 int cd(char *command[], int iter) {
     int temp = 0;
-    printf("%d\n",(int)getpid());
+    printf("%d\n", (int) getpid());
 
     //             currentHistory[numOfCommand]->pid = (int)getpid();
 
@@ -70,3 +77,24 @@ int cd(char *command[], int iter) {
         fprintf(stderr, "Error in system call");
     }
 }
+
+void exitFunc() {
+    printf("%d\n", (int) getpid());
+    exit(0);
+}
+
+void exec(char *command[]){
+        //‪execv‬‬
+        pid_t pid;
+        if ((pid = fork()) == 0){
+            char cwd[1024];
+            getcwd(cwd, sizeof(cwd));
+            printf("%d\n",(int)getpid());
+
+            execvp(command[0],command);
+        }
+        else {
+            signal(SIGCHLD,SIG_IGN);
+
+        }
+};
