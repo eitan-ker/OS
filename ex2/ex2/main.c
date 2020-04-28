@@ -5,7 +5,7 @@
 #include <stdlib.h>
 #include <sys/types.h>
 
-int cd (char* command[], int iter);
+int cd(char *command[], int iter);
 
 int main() {
     // initialization
@@ -26,34 +26,47 @@ int main() {
         comArr[0] = command;
         temp = strtok(NULL, " ");
         i = 1;
-        // inserting all flags
+        // inserting all arguments
         while (temp != NULL) {
             comArr[i] = temp;
             i++;
             temp = strtok(NULL, " ");
         }
         comArr[i] = NULL;
+        i--;
         if (!strcmp(comArr[0], "jobs")) {
-            printf("jobs\n");
             // jobs func
         } else if (!strcmp(comArr[0], "history")) {
-            printf("history\n");
             // history func
         } else if (!strcmp(comArr[0], "cd")) {
-            printf("cd\n");
             // cd func
             cd(comArr, i);
         } else if (!strcmp(comArr[0], "exit")) {
-            printf("exit\n");
             // exit func
         } else {
-            printf("else\n");
             // exec func
         }
     }
     return 0;
 }
 
-int cd (char* command[], int iter) {
+int cd(char *command[], int iter) {
+    int temp = 0;
+    printf("%d\n",(int)getpid());
 
+    //             currentHistory[numOfCommand]->pid = (int)getpid();
+
+    if (iter >= 2) {
+        printf("%d\n", (int) getpid());
+        fprintf(stderr, "Error: Too many arguments");
+    } else {
+        char *directory = command[iter];
+
+        temp = chdir(directory);
+
+    }
+    if (temp == -1) {
+        printf("%d\n", (int) getpid());
+        fprintf(stderr, "Error in system call");
+    }
 }
