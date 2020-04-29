@@ -6,7 +6,20 @@
 #include <sys/types.h>
 #include <signal.h>
 
-int cd(char *command[], int iter);
+typedef struct history{
+    char* command;
+    int pid;
+    char* status;
+} history;
+
+typedef struct specialdir{
+    char currDir[1024];
+    char lastDir[1024];
+    char homeDir[1024];
+
+} specialdir;
+
+int cd(char *command[], int iter, specialdir* dirStr);
 
 void exitFunc();
 
@@ -21,6 +34,13 @@ int main() {
     char *temp;
     char *comArr[100];
     int i;
+
+    // initialization of directory struct
+    specialdir* dirStr = (specialdir*)malloc(sizeof(specialdir));;
+    getcwd(dirStr->homeDir, sizeof(dirStr->homeDir));
+    strcpy(dirStr->lastDir, dirStr->homeDir);
+    strcpy(dirStr->currDir, dirStr->homeDir);
+
 
     // running the shell in the while loop
     while (true) {
@@ -45,7 +65,7 @@ int main() {
             // history func
         } else if (!strcmp(comArr[0], "cd")) {
             // cd func
-            cd(comArr, i);
+            cd(comArr, i, dirStr);
         } else if (!strcmp(comArr[0], "exit")) {
             // exit func
             exitFunc();
@@ -57,8 +77,9 @@ int main() {
     return 0;
 }
 
-int cd(char *command[], int iter) {
+int cd(char *command[100], int iter, specialdir* dirStr) {
     int temp = 0;
+    char tempDir[1024]; // save last in case cd didn't work
     printf("%d\n", (int) getpid());
 
     //             currentHistory[numOfCommand]->pid = (int)getpid();
@@ -67,15 +88,30 @@ int cd(char *command[], int iter) {
         printf("%d\n", (int) getpid());
         fprintf(stderr, "Error: Too many arguments");
     } else {
-        char *directory = command[iter];
-
-        temp = chdir(directory);
-
+        strcpy(tempDir, dirStr->lastDir);
+        strcpy(dirStr->lastDir, dirStr->currDir); // last getting the current before change
+        if (!strcmp(command[iter], "~")) {
+            temp = chdir(dirStr->homeDir);
+            strcpy(dirStr->currDir, dirStr->homeDir);
+        } else if (!strcmp(command[iter], "-")) {
+            temp = chdir(tempDir);
+            strcpy(dirStr->currDir, tempDir);
+        } else if (!strcmp(command[iter], "..")) {
+            temp = chdir(command[iter]);
+            getcwd(dirStr->currDir, sizeof(dirStr->currDir));
+        } else {
+            temp = chdir(command[iter]);
+            strcpy(dirStr->currDir, command[iter]);
+        }
     }
     if (temp == -1) {
+        strcpy(dirStr->lastDir, tempDir);
+        strcpy(dirStr->currDir, dirStr->lastDir); // in case cd didn't work go back to last dir
         printf("%d\n", (int) getpid());
         fprintf(stderr, "Error in system call");
+        // do i need to return if temp = -1
     }
+    return temp;
 }
 
 void exitFunc() {
@@ -95,6 +131,5 @@ void exec(char *command[]){
         }
         else {
             signal(SIGCHLD,SIG_IGN);
-
         }
 };
