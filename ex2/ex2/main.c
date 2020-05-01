@@ -9,7 +9,7 @@
 typedef struct history {
     char *command;
     int pid;
-    int status; // 0 is not alive, 1 is running, 2 is done
+    char* status;
 } history;
 
 typedef struct specialdir {
@@ -21,11 +21,11 @@ typedef struct specialdir {
 
 void printHIstory(history *hisComm[100], int hisCommIter);
 
-int cd(char *command[], int iter, specialdir *dirStr);
+void cd(char *command[], int iter, specialdir *dirStr);
 
 void exitFunc();
 
-void exec(char *command[]);
+void exec(char *command[], history *hisComm[100], int hisCommIter);
 
 int main() {
     // initialization
@@ -90,7 +90,7 @@ int main() {
             exitFunc();
         } else {
             // exec func
-            exec(comArr);
+            exec(comArr, hisComm, hisCommIter);
         }
         hisCommIter++;
     }
@@ -99,12 +99,31 @@ int main() {
 
 void printHIstory(history *hisComm[100], int hisCommIter) {
     int i = 0;
-    for (i = 0; i < hisCommIter; i++) {
-        printf("%d %s\n", hisComm[i]->pid, hisComm[i]->command);
+    for (i = 0; i <= hisCommIter; i++) {
+        int tempPid = hisComm[i]->pid;
+        if (i == hisCommIter) {
+            hisComm[i]->status = "RUNNING";
+        }
+        if (hisComm[i]->status != NULL) {
+            if (!kill(tempPid, 0)) {
+                printf("%d\n", kill(tempPid, 0));
+                hisComm[i]->status = "RUNNING";
+            } else {
+                hisComm[i]->status = "DONE";
+            }
+        } else {
+            if (!kill(tempPid, 0)) {
+                hisComm[i]->status = "RUNNING";
+            } else {
+                hisComm[i]->status = "DONE";
+            }
+        }
+        printf("%d %s %s\n", hisComm[i]->pid, hisComm[i]->command, hisComm[i]->status);
     }
+    hisComm[hisCommIter] = "DONE";
 }
 
-int cd(char *command[100], int iter, specialdir *dirStr) {
+void cd(char *command[100], int iter, specialdir *dirStr) {
     int temp = 0;
     char tempDir[1024]; // save last in case cd didn't work
     if (iter >= 2) {
@@ -134,7 +153,6 @@ int cd(char *command[100], int iter, specialdir *dirStr) {
         fprintf(stderr, "Error in system call");
         // do i need to return if temp = -1
     }
-    return temp;
 }
 
 void exitFunc() {
@@ -142,16 +160,18 @@ void exitFunc() {
     exit(0);
 }
 
-void exec(char *command[]) {
+void exec(char *command[], history *hisComm[100], int hisCommIter) {
     //‪execv‬‬
     pid_t pid;
     if ((pid = fork()) == 0) {
         char cwd[1024];
         getcwd(cwd, sizeof(cwd));
         printf("%d\n", (int) getpid());
-
         execvp(command[0], command);
     } else {
+        hisComm[hisCommIter]->pid = (int)pid;
         signal(SIGCHLD, SIG_IGN);
     }
+    usleep(10000);
+
 };
