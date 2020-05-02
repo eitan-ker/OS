@@ -5,6 +5,7 @@
 #include <stdlib.h>
 #include <sys/types.h>
 #include <signal.h>
+#include <wait.h>
 
 typedef struct history {
     char *command;
@@ -25,7 +26,7 @@ void cd(char *command[], int iter, specialdir *dirStr);
 
 void exitFunc();
 
-void exec(char *command[], history *hisComm[100], int hisCommIter);
+void exec(char *command[], history *hisComm[100], int hisCommIter, int backFlag);
 
 int main() {
     // initialization
@@ -42,6 +43,7 @@ int main() {
 
     // initialization of directory struct
     specialdir *dirStr = (specialdir *) malloc(sizeof(specialdir));;
+    chdir(getenv("HOME"));
     getcwd(dirStr->homeDir, sizeof(dirStr->homeDir));
     strcpy(dirStr->lastDir, dirStr->homeDir);
     strcpy(dirStr->currDir, dirStr->homeDir);
@@ -90,7 +92,7 @@ int main() {
             exitFunc();
         } else {
             // exec func
-            exec(comArr, hisComm, hisCommIter);
+            exec(comArr, hisComm, hisCommIter, backFlag);
         }
         hisCommIter++;
     }
@@ -130,6 +132,9 @@ void cd(char *command[100], int iter, specialdir *dirStr) {
         printf("%d\n", (int) getpid());
         fprintf(stderr, "Error: Too many arguments");
     } else {
+        char delim = command[iter][0];
+        int size = strlen(command[iter]);
+        char subbuff[1024];
         strcpy(tempDir, dirStr->lastDir);
         strcpy(dirStr->lastDir, dirStr->currDir); // last getting the current before change
         if (!strcmp(command[iter], "~")) {
@@ -142,8 +147,28 @@ void cd(char *command[100], int iter, specialdir *dirStr) {
             temp = chdir(command[iter]);
             getcwd(dirStr->currDir, sizeof(dirStr->currDir));
         } else {
-            temp = chdir(command[iter]);
-            strcpy(dirStr->currDir, command[iter]);
+            if (delim == '~') {
+                memcpy( subbuff, &command[iter][1], size - 1);
+                subbuff[size - 1] = NULL;
+                chdir(dirStr->homeDir);
+                getcwd(dirStr->currDir, sizeof(dirStr->currDir));
+                strcat(dirStr->currDir, subbuff);
+                dirStr->currDir[strlen(dirStr->homeDir) + strlen(subbuff)] = NULL;
+                temp = chdir(dirStr->currDir);
+                strcpy(dirStr->currDir, command[iter]);
+            } else if (delim == '-') {
+                memcpy( subbuff, &command[iter][1], size - 1);
+                subbuff[size - 1] = NULL;
+                chdir(tempDir);
+                getcwd(dirStr->currDir, sizeof(dirStr->currDir));
+                strcat(dirStr->currDir, subbuff);
+                dirStr->currDir[strlen(tempDir) + strlen(subbuff)] = NULL;
+                temp = chdir(dirStr->currDir);
+                strcpy(dirStr->currDir, command[iter]);
+            } else {
+                temp = chdir(command[iter]);
+                strcpy(dirStr->currDir, command[iter]);
+            }
         }
     }
     if (temp == -1) {
@@ -160,8 +185,9 @@ void exitFunc() {
     exit(0);
 }
 
-void exec(char *command[], history *hisComm[100], int hisCommIter) {
+void exec(char *command[], history *hisComm[100], int hisCommIter, int backFlag) {
     //‪execv‬‬
+    int status;
     pid_t pid;
     if ((pid = fork()) == 0) {
         char cwd[1024];
@@ -171,7 +197,10 @@ void exec(char *command[], history *hisComm[100], int hisCommIter) {
     } else {
         hisComm[hisCommIter]->pid = (int)pid;
         signal(SIGCHLD, SIG_IGN);
+        if(backFlag){
+            wait(&status);
+        }
     }
-    usleep(10000);
+    usleep(100000);
 
 };

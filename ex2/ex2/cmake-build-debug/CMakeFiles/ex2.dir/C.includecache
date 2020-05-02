@@ -21,4 +21,6 @@ sys/types.h
 -
 signal.h
 -
+wait.h
+-
 
