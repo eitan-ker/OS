@@ -10,7 +10,7 @@
 typedef struct history {
     char *command;
     int pid;
-    char* status;
+    char *status;
 } history;
 
 typedef struct specialdir {
@@ -20,7 +20,7 @@ typedef struct specialdir {
 
 } specialdir;
 
-void printHIstory(history *hisComm[100], int hisCommIter);
+void printHIstory(history *hisComm[100], int hisCommIter, int backFlag);
 
 void cd(char *command[], int iter, specialdir *dirStr);
 
@@ -81,7 +81,7 @@ int main() {
             // jobs func
         } else if (!strcmp(comArr[0], "history")) {
             // history func
-            printHIstory(hisComm, hisCommIter);
+            printHIstory(hisComm, hisCommIter, backFlag);
         } else if (!strcmp(comArr[0], "cd")) {
             // cd func
             printf("%d\n", (int) getpid());
@@ -99,30 +99,41 @@ int main() {
     return 0;
 }
 
-void printHIstory(history *hisComm[100], int hisCommIter) {
+void printHIstory(history *hisComm[100], int hisCommIter, int backFlag) {
     int i = 0;
-    for (i = 0; i <= hisCommIter; i++) {
-        int tempPid = hisComm[i]->pid;
-        if (i == hisCommIter) {
-            hisComm[i]->status = "RUNNING";
-        }
-        if (hisComm[i]->status != NULL) {
-            if (!kill(tempPid, 0)) {
-                printf("%d\n", kill(tempPid, 0));
+    pid_t pid;
+    int status;
+    if ((pid = fork()) < 0) {
+        fprintf(stderr, "Error in system call");
+        printf("\n");
+    } else if (pid == 0) { // child
+        for (i = 0; i <= hisCommIter; i++) {
+            int tempPid = hisComm[i]->pid;
+            if (i == hisCommIter) {
                 hisComm[i]->status = "RUNNING";
-            } else {
-                hisComm[i]->status = "DONE";
             }
-        } else {
-            if (!kill(tempPid, 0)) {
-                hisComm[i]->status = "RUNNING";
+            if (hisComm[i]->status != NULL) {
+                if (!kill(tempPid, 0)) {
+                    hisComm[i]->status = "RUNNING";
+                } else {
+                    hisComm[i]->status = "DONE";
+                }
             } else {
-                hisComm[i]->status = "DONE";
+                if (!kill(tempPid, 0)) {
+                    hisComm[i]->status = "RUNNING";
+                } else {
+                    hisComm[i]->status = "DONE";
+                }
             }
+            printf("%d %s %s\n", hisComm[i]->pid, hisComm[i]->command, hisComm[i]->status);
         }
-        printf("%d %s %s\n", hisComm[i]->pid, hisComm[i]->command, hisComm[i]->status);
+        hisComm[hisCommIter] = "DONE";
+        exit(0);
+    } else {
+        hisComm[hisCommIter]->pid = (int) pid;
+        signal(SIGCHLD, SIG_IGN);
+        wait(&status);
     }
-    hisComm[hisCommIter] = "DONE";
 }
 
 void cd(char *command[100], int iter, specialdir *dirStr) {
@@ -131,6 +142,8 @@ void cd(char *command[100], int iter, specialdir *dirStr) {
     if (iter >= 2) {
         printf("%d\n", (int) getpid());
         fprintf(stderr, "Error: Too many arguments");
+        printf("\n");
+
     } else {
         char delim = command[iter][0];
         int size = strlen(command[iter]);
@@ -148,7 +161,7 @@ void cd(char *command[100], int iter, specialdir *dirStr) {
             getcwd(dirStr->currDir, sizeof(dirStr->currDir));
         } else {
             if (delim == '~') {
-                memcpy( subbuff, &command[iter][1], size - 1);
+                memcpy(subbuff, &command[iter][1], size - 1);
                 subbuff[size - 1] = NULL;
                 chdir(dirStr->homeDir);
                 getcwd(dirStr->currDir, sizeof(dirStr->currDir));
@@ -157,7 +170,7 @@ void cd(char *command[100], int iter, specialdir *dirStr) {
                 temp = chdir(dirStr->currDir);
                 strcpy(dirStr->currDir, command[iter]);
             } else if (delim == '-') {
-                memcpy( subbuff, &command[iter][1], size - 1);
+                memcpy(subbuff, &command[iter][1], size - 1);
                 subbuff[size - 1] = NULL;
                 chdir(tempDir);
                 getcwd(dirStr->currDir, sizeof(dirStr->currDir));
@@ -174,9 +187,9 @@ void cd(char *command[100], int iter, specialdir *dirStr) {
     if (temp == -1) {
         strcpy(dirStr->lastDir, tempDir);
         strcpy(dirStr->currDir, dirStr->lastDir); // in case cd didn't work go back to last dir
-        printf("%d\n", (int) getpid());
+//        printf("%d\n", (int) getpid());
         fprintf(stderr, "Error in system call");
-        // do i need to return if temp = -1
+        printf("\n");
     }
 }
 
@@ -189,18 +202,18 @@ void exec(char *command[], history *hisComm[100], int hisCommIter, int backFlag)
     //‪execv‬‬
     int status;
     pid_t pid;
-    if ((pid = fork()) == 0) {
+    if ((pid = fork()) < 0) { // error
+        fprintf(stderr, "Error in system call");
+        printf("\n");
+    } else if (pid == 0) { //child
         char cwd[1024];
         getcwd(cwd, sizeof(cwd));
         printf("%d\n", (int) getpid());
         execvp(command[0], command);
-    } else {
-        hisComm[hisCommIter]->pid = (int)pid;
+        exit(0);
+    } else { // fater
+        hisComm[hisCommIter]->pid = (int) pid;
         signal(SIGCHLD, SIG_IGN);
-        if(backFlag){
-            wait(&status);
-        }
+        wait(&status);
     }
-    usleep(100000);
-
 };
