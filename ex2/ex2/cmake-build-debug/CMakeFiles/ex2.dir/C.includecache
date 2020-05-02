@@ -7,26 +7,20 @@
 #IncludeRegexTransform: 
 
 /home/eizzker/Desktop/OS/ex2/ex2/main.c
-sys/types.h
--
-unistd.h
--
 stdio.h
 -
+stdbool.h
+-
 unistd.h
+-
+string.h
 -
 stdlib.h
 -
 sys/types.h
 -
-sys/wait.h
+signal.h
 -
-sys/types.h
--
-sys/wait.h
--
-string.h
--
-sys/stat.h
+wait.h
 -
 

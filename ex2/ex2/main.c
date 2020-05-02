@@ -20,7 +20,7 @@ typedef struct specialdir {
 
 } specialdir;
 
-void printHIstory(history *hisComm[100], int hisCommIter, int backFlag);
+void printHisJob(history *hisComm[100], int hisCommIter, int backFlag, int hisJobsFlag);
 
 void cd(char *command[], int iter, specialdir *dirStr);
 
@@ -79,9 +79,10 @@ int main() {
         i--;
         if (!strcmp(comArr[0], "jobs")) {
             // jobs func
+            printHisJob(hisComm, hisCommIter, backFlag, 1);
         } else if (!strcmp(comArr[0], "history")) {
             // history func
-            printHIstory(hisComm, hisCommIter, backFlag);
+            printHisJob(hisComm, hisCommIter, backFlag, 0);
         } else if (!strcmp(comArr[0], "cd")) {
             // cd func
             printf("%d\n", (int) getpid());
@@ -99,10 +100,11 @@ int main() {
     return 0;
 }
 
-void printHIstory(history *hisComm[100], int hisCommIter, int backFlag) {
+void printHisJob(history *hisComm[100], int hisCommIter, int backFlag, int hisJobFlag) {
     int i = 0;
     pid_t pid;
     int status;
+    int jobsFlag = 0;
     if ((pid = fork()) < 0) {
         fprintf(stderr, "Error in system call");
         printf("\n");
@@ -110,22 +112,38 @@ void printHIstory(history *hisComm[100], int hisCommIter, int backFlag) {
         for (i = 0; i <= hisCommIter; i++) {
             int tempPid = hisComm[i]->pid;
             if (i == hisCommIter) {
+                hisComm[i]->pid = (int) getpid();
                 hisComm[i]->status = "RUNNING";
+                jobsFlag = 1;
             }
             if (hisComm[i]->status != NULL) {
                 if (!kill(tempPid, 0)) {
                     hisComm[i]->status = "RUNNING";
+                    jobsFlag = 1;
+
                 } else {
                     hisComm[i]->status = "DONE";
+                    jobsFlag = 0;
+
                 }
             } else {
                 if (!kill(tempPid, 0)) {
                     hisComm[i]->status = "RUNNING";
+                    jobsFlag = 1;
                 } else {
                     hisComm[i]->status = "DONE";
+                    jobsFlag = 0;
                 }
             }
-            printf("%d %s %s\n", hisComm[i]->pid, hisComm[i]->command, hisComm[i]->status);
+            if (hisJobFlag == 1) { //if we're in Jobs mode
+                if (jobsFlag == 1) { // if the command is really in running state
+                    if (i < hisCommIter) {
+                        printf("%d %s\n", hisComm[i]->pid, hisComm[i]->command);
+                    }
+                }
+            } else { // if we're in HIstory mode
+                printf("%d %s %s\n", hisComm[i]->pid, hisComm[i]->command, hisComm[i]->status);
+            }
         }
         hisComm[hisCommIter] = "DONE";
         exit(0);
