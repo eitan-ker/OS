@@ -37,7 +37,7 @@ int main() {
     char *temp;
     char *comArr[100];
     int i;
-    int backFlag = 0; // is the command had &
+    int backFlag = 0; // 0 means foregroung, 1 means background
     history *hisComm[100]; // INPUT of all commands by client
     int hisCommIter = 0; // number of commands counter
 
@@ -68,7 +68,7 @@ int main() {
         while (temp != NULL) {
             if (!strcmp(temp, "&")) {
                 temp = strtok(NULL, " ");
-                backFlag = 1;
+                backFlag = 1; // background
                 continue;
             }
             comArr[i] = temp;
@@ -187,7 +187,6 @@ void cd(char *command[100], int iter, specialdir *dirStr) {
     if (temp == -1) {
         strcpy(dirStr->lastDir, tempDir);
         strcpy(dirStr->currDir, dirStr->lastDir); // in case cd didn't work go back to last dir
-//        printf("%d\n", (int) getpid());
         fprintf(stderr, "Error in system call");
         printf("\n");
     }
@@ -211,9 +210,11 @@ void exec(char *command[], history *hisComm[100], int hisCommIter, int backFlag)
         printf("%d\n", (int) getpid());
         execvp(command[0], command);
         exit(0);
-    } else { // fater
+    } else { // father
         hisComm[hisCommIter]->pid = (int) pid;
         signal(SIGCHLD, SIG_IGN);
-        wait(&status);
+        if (!backFlag) {
+            wait(&status);
+        }
     }
 };
