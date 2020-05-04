@@ -145,7 +145,7 @@ void printHisJob(history *hisComm[100], int hisCommIter, int backFlag, int hisJo
                 printf("%d %s %s\n", hisComm[i]->pid, hisComm[i]->command, hisComm[i]->status);
             }
         }
-        hisComm[hisCommIter] = "DONE";
+        hisComm[hisCommIter]->status = "DONE";
         exit(0);
     } else {
         hisComm[hisCommIter]->pid = (int) pid;
@@ -180,20 +180,20 @@ void cd(char *command[100], int iter, specialdir *dirStr) {
         } else {
             if (delim == '~') {
                 memcpy(subbuff, &command[iter][1], size - 1);
-                subbuff[size - 1] = NULL;
+                subbuff[size - 1] = 0;
                 chdir(dirStr->homeDir);
                 getcwd(dirStr->currDir, sizeof(dirStr->currDir));
                 strcat(dirStr->currDir, subbuff);
-                dirStr->currDir[strlen(dirStr->homeDir) + strlen(subbuff)] = NULL;
+                dirStr->currDir[strlen(dirStr->homeDir) + strlen(subbuff)] = 0;
                 temp = chdir(dirStr->currDir);
                 strcpy(dirStr->currDir, command[iter]);
             } else if (delim == '-') {
                 memcpy(subbuff, &command[iter][1], size - 1);
-                subbuff[size - 1] = NULL;
+                subbuff[size - 1] = 0;
                 chdir(tempDir);
                 getcwd(dirStr->currDir, sizeof(dirStr->currDir));
                 strcat(dirStr->currDir, subbuff);
-                dirStr->currDir[strlen(tempDir) + strlen(subbuff)] = NULL;
+                dirStr->currDir[strlen(tempDir) + strlen(subbuff)] = 0;
                 temp = chdir(dirStr->currDir);
                 strcpy(dirStr->currDir, command[iter]);
             } else {
