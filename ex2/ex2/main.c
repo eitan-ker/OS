@@ -215,10 +215,20 @@ void exitFunc() {
     exit(0);
 }
 
-void exec(char *command[], history *hisComm[100], int hisCommIter, int backFlag) {
+void exec(char *command[100], history *hisComm[100], int hisCommIter, int backFlag) {
     //‪execv‬‬
     int status;
     pid_t pid;
+    char subbuff[1024];
+    int size = strlen(command[1]);
+    if (!strcmp(command[0], "echo")) {
+        if (command[1][0] == '"') {
+            memcpy(subbuff, &command[1][1], size - 2);
+            subbuff[size - 2] = 0;
+            strcpy(command[1], subbuff);
+        }
+    }
+
     if ((pid = fork()) < 0) { // error
         fprintf(stderr, "Error in system call");
         printf("\n");
