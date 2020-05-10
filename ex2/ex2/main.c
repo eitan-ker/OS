@@ -71,7 +71,17 @@ int main() {
                 backFlag = 1; // background
                 continue;
             }
-            comArr[i] = temp;
+            if (temp[0] == '"' && temp[strlen(temp)-1] == '"') {
+                temp[strlen(temp) - 1] = 0;
+                comArr[i] = temp+1;
+            } else if (temp[0] == '"') {
+                comArr[i] = temp+1;
+            } else if (temp[strlen(temp)-1] == '"') {
+                temp[strlen(temp) - 1] = 0;
+                comArr[i] = temp;
+            } else {
+                comArr[i] = temp;
+            }
             i++;
             temp = strtok(NULL, " ");
         }
@@ -219,16 +229,8 @@ void exec(char *command[100], history *hisComm[100], int hisCommIter, int backFl
     //‪execv‬‬
     int status;
     pid_t pid;
-    char subbuff[1024];
+    int i;
     int size = strlen(command[1]);
-    if (!strcmp(command[0], "echo")) {
-        if (command[1][0] == '"') {
-            memcpy(subbuff, &command[1][1], size - 2);
-            subbuff[size - 2] = 0;
-            strcpy(command[1], subbuff);
-        }
-    }
-
     if ((pid = fork()) < 0) { // error
         fprintf(stderr, "Error in system call");
         printf("\n");
@@ -245,4 +247,4 @@ void exec(char *command[100], history *hisComm[100], int hisCommIter, int backFl
             wait(&status);
         }
     }
-};
+}
