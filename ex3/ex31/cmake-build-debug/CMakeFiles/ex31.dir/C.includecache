@@ -1,0 +1,20 @@
+#IncludeRegexLine: ^[ 	]*[#%][ 	]*(include|import)[ 	]*[<"]([^">]+)([">])
+
+#IncludeRegexScan: ^.*$
+
+#IncludeRegexComplain: ^$
+
+#IncludeRegexTransform: 
+
+/home/eizzker/Desktop/OS/ex3/ex31/main.c
+stdio.h
+-
+string.h
+-
+fcntl.h
+-
+sys/stat.h
+-
+unistd.h
+-
+
