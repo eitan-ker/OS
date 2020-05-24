@@ -32,6 +32,7 @@ int main(int argc, char *argv[]) {
     // open file1
     if ((file1 = open(path1, O_RDONLY)) == -1) {
         fprintf(stderr, "there is an error in stat function in file 1");
+        return -1;
     }
     if (stat(path1, &file_1_stat) == -1) {
         return -1;
@@ -41,6 +42,7 @@ int main(int argc, char *argv[]) {
     // open file2
     if ((file2 = open(path2, O_RDONLY)) == -1) {
         fprintf(stderr, "there is an error in stat function in file 1");
+        return -1;
     }
     if (stat(path2, &file_2_stat) == -1) {
         return -1;
@@ -56,6 +58,9 @@ int main(int argc, char *argv[]) {
     close(file1);
     close(file2);
 
+    if (ret_value == -1) {
+        return -1;
+    }
     return ret_value;
 }
 
@@ -89,9 +94,11 @@ int checkFiles(char *file1, char *file2, int file1_size, int file2_size) {
             for (j = 0; j < file2_size; j++) {
                 if(lseek(file1, i, SEEK_SET == -1)) {
                     fprintf(stderr, "there is an error in lseek function in file 1");
+                    return -1;
                 }
                 if (lseek(file2, j, SEEK_SET == -1)) {
                     fprintf(stderr, "there is an error in lseek function in file 2");
+                    return -1;
                 }
                 buff1_size = read(file1, buff1, 1024);
                 buff2_size = read(file2, buff2, 1024);
@@ -110,7 +117,6 @@ int checkFiles(char *file1, char *file2, int file1_size, int file2_size) {
         matchesCounter = matchesCounter + maxMatches;
         chars_readed = chars_readed + maxBufSize;
     }
-    // matchesCounter--;
     if (matchesCounter == maxFileSize) {
         flag = 1;
     } else if (matchesCounter >= ((minFileSize / 2) + 1)) {
