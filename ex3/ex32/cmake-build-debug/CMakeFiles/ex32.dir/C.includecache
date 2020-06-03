@@ -15,4 +15,10 @@ stdlib.h
 -
 unistd.h
 -
+dirent.h
+-
+string.h
+-
+sys/stat.h
+-
 
