@@ -5,24 +5,35 @@
 #include <dirent.h>
 #include <string.h>
 #include <sys/stat.h>
+#include <wait.h>
+#include <time.h>
 
 void readArgFile(int dirFile, char **pathToDir, char **pathToInput, char **pathToOutput);
 
-char* copyLine(char buffer[150],int j, int tabsCounter);
+char *copyLine(char buffer[150], int j, int tabsCounter);
 
-void startTest(char* pathToDir, char *pathToInput, char *pathToOutput);
+void startTest(char *pathToDir, char *pathToInput, char *pathToOutput);
 
-int searchCFilesReturnScore(DIR* insideHomeDir, char *pathToInput,
-                            char *pathToOutput, char* insideFirstDir);
-int compileAndScore(char *pathToInput, char *pathToOutput, struct dirent* inDir,
-                char* fileInsideDIr, char *file);
+int searchCFilesReturnScore(DIR *insideHomeDir, char *pathToInput,
+                            char *pathToOutput, char *insideFirstDir);
 
-void compile();
+int compileAndScore(char *pathToInput, char *pathToOutput, struct dirent *inDir,
+                    char *fileInsideDIr, char *file);
 
-int main(int argc, char* argv[]) {
-    char* pathToDir;
-    char* pathToInput;
-    char* pathToOutput;
+int compile(char *fileInsideDIr, char *fileTxtOutput, char *pathToInput, char *pathToOutput);
+
+int getScore(int flag);
+
+int runCompiled(char *fileTxtOutput, char *pathToInput, char *pathToOutput);
+
+int TestComp(char *fileTxtOutput, char *pathToOutput);
+
+void printScore(int score);
+
+int main(int argc, char *argv[]) {
+    char *pathToDir;
+    char *pathToInput;
+    char *pathToOutput;
     int dirFile = open(argv[1], O_RDONLY);
     if (dirFile == -1) {
         fprintf(stderr, "could not open file");
@@ -35,15 +46,15 @@ int main(int argc, char* argv[]) {
     readArgFile(dirFile, &pathToDir, &pathToInput, &pathToOutput);
 
     // open paths - test opening failed
-    if (access(pathToDir,F_OK) == -1) {
+    if (access(pathToDir, F_OK) == -1) {
         fprintf(stderr, "Not a valid directory\n");
         return -1;
     }
-    if (access(pathToInput,F_OK) == -1) {
+    if (access(pathToInput, F_OK) == -1) {
         fprintf(stderr, "Input/output File not exist\n");
         return -1;
     }
-    if (access(pathToOutput,F_OK) == -1) {
+    if (access(pathToOutput, F_OK) == -1) {
         fprintf(stderr, "Input/output File not exist\n");
         return -1;
     }
@@ -54,24 +65,24 @@ int main(int argc, char* argv[]) {
     return 0;
 }
 
-void startTest(char* pathToDir, char *pathToInput, char *pathToOutput) {
-    struct dirent* firstDir;
+void startTest(char *pathToDir, char *pathToInput, char *pathToOutput) {
+    struct dirent *firstDir;
     struct stat fileStat;
-    DIR* homeDir = opendir(pathToDir);
-    DIR* insideHomeDir;
+    DIR *homeDir = opendir(pathToDir);
+    DIR *insideHomeDir;
     int score = 0;
     if (!homeDir) {
         fprintf(stderr, "error in system call");
         exit(1);
     }
-    int file = open("result.csv", O_RDWR|O_CREAT, S_IRUSR|S_IWUSR|S_IWGRP|S_IWOTH);
+    int file = open("result.csv", O_RDWR | O_CREAT, S_IRUSR | S_IWUSR | S_IWGRP | S_IWOTH);
     if (file == -1) {
         fprintf(stderr, "could not open file\n");
         exit(1);
     }
     while ((firstDir = readdir(homeDir)) != NULL) {
-        char * dir = firstDir->d_name;
-        if ((strcmp(firstDir->d_name, "..")==0) || (strcmp(firstDir->d_name, ".")==0)) {
+        char *dir = firstDir->d_name;
+        if ((strcmp(firstDir->d_name, "..") == 0) || (strcmp(firstDir->d_name, ".") == 0)) {
             continue;
         }
         if (firstDir->d_type == 4) // if the path inside the first dir is a dir
@@ -91,24 +102,29 @@ void startTest(char* pathToDir, char *pathToInput, char *pathToOutput) {
                 exit(1);
             }
             // search for c files
-            score = searchCFilesReturnScore(insideHomeDir, pathToInput, pathToOutput, fileInsideDir); //score result from files
-            int c =2;
+            score = searchCFilesReturnScore(insideHomeDir, pathToInput, pathToOutput,
+                                            fileInsideDir); //score result from files
             // write score for file
+            printScore(score);
         }
     }
 
 }
 
-int searchCFilesReturnScore(DIR* insideHomeDir, char *pathToInput,
-        char *pathToOutput, char* fileInsideDIr) {
-    struct dirent* inDir;
+void printScore(int score) {
+
+}
+
+int searchCFilesReturnScore(DIR *insideHomeDir, char *pathToInput,
+                            char *pathToOutput, char *fileInsideDIr) {
+    struct dirent *inDir;
 
     int fileNameLength = 0;
     int cFileFlag = 0;
     while ((inDir = readdir(insideHomeDir)) != NULL) {
         cFileFlag++;
         char *file = inDir->d_name;
-        if ((strcmp(inDir->d_name, "..")==0) || (strcmp(inDir->d_name, ".")==0)) {
+        if ((strcmp(inDir->d_name, "..") == 0) || (strcmp(inDir->d_name, ".") == 0)) {
             continue;
         }
         if (inDir->d_type == 8) // if the file might be c type
@@ -130,14 +146,10 @@ int searchCFilesReturnScore(DIR* insideHomeDir, char *pathToInput,
     }
 }
 
-int compileAndScore(char *pathToInput, char *pathToOutput, struct dirent* inDir,
-        char* fileInsideDIr, char *file) {
+int compileAndScore(char *pathToInput, char *pathToOutput, struct dirent *inDir,
+                    char *fileInsideDIr, char *file) {
     char fileExe[150];
     char fileTxtOutput[150];
-    // make the exe file
-    strcpy(fileExe, fileInsideDIr);
-    strcat(fileExe, "/");
-    strcat(fileExe, "a.out");
     // make the result file
     strcpy(fileTxtOutput, "./");
     strcat(fileTxtOutput, file);
@@ -146,24 +158,109 @@ int compileAndScore(char *pathToInput, char *pathToOutput, struct dirent* inDir,
     strcat(fileInsideDIr, "/");
     strcat(fileInsideDIr, file);
     // compile file
-    compile(fileInsideDIr, fileExe, fileTxtOutput);
-
-
     // run compiled file with the input file
-
     // test output with output file using ex31 func
-
     // return score
+    return compile(fileInsideDIr, fileTxtOutput, pathToInput, pathToOutput);
 }
 
-void compile(char* fileInsideDIr, char* fileExe, char* fileTxtOutput) {
-    pid_t pid1, pid2,pid3;
-    if (pid1 == fork() == 0) {
-        char* argv[3];
+int compile(char *fileInsideDIr, char *fileTxtOutput, char *pathToInput, char *pathToOutput) {
+    pid_t pid;
+    int status = 0;
+    int scoreFlag = 0;
+    if ((pid = fork()) == 0) {
+        char *argv[3];
         argv[0] = "gcc";
         argv[1] = fileInsideDIr;
-        argv[2] = NULL
-        int d =3;
+        argv[2] = NULL;
+        execvp("gcc", argv);
+        exit(1);
+    } else {
+        waitpid(pid, &status, 0);
+        if (WEXITSTATUS(status) == 1) {
+            scoreFlag = 2; // second condition for compilation error
+            return getScore(scoreFlag);
+        }
+        // compilation succeeded
+        return runCompiled(fileTxtOutput, pathToInput, pathToOutput);
+    }
+}
+
+int runCompiled(char *fileTxtOutput, char *pathToInput, char *pathToOutput) {
+    int input, txtOutput, status = 0;
+    int scoreFlag = 0;
+    int score = 0;
+    pid_t pid;
+    time_t beforeExec, afterExec;
+    input = open(fileTxtOutput, O_RDWR | O_CREAT, S_IRUSR | S_IWUSR | S_IWGRP | S_IWOTH);
+    txtOutput = open(pathToInput, O_RDONLY);
+    if ((input == -1) || (txtOutput == -1)) {
+        fprintf(stderr, "error in system call");
+        exit(1);
+    }
+    if (pid = fork() == 0) {
+        dup2(input, 1);
+        dup2(txtOutput, 0);
+        close(input);
+        close(txtOutput);
+        char *argv[2];
+        argv[0] = "a.out";
+        argv[1] = NULL;
+        execvp("./a.out", argv);
+        exit(1);
+    } else {
+        time(&beforeExec);
+        waitpid(pid, &status, 0);
+        time(&afterExec);
+        double deltaTime = afterExec - beforeExec;
+        if (deltaTime > 3) {
+            scoreFlag = 3;
+            return getScore(scoreFlag);
+        }
+        score = TestComp(fileTxtOutput, pathToOutput);
+        close(input);
+        close(txtOutput);
+        return score;
+    }
+}
+
+int TestComp(char *fileTxtOutput, char *pathToOutput) {
+    pid_t pid;
+    int status = 0;
+    int scoreFlag = 0;
+    if (pid = fork() == 0) {
+        char *argv[4];
+        argv[0] = "comp.out";
+        argv[1] = fileTxtOutput;
+        argv[2] = pathToOutput;
+        argv[3] = NULL;
+        execvp("./comp.out", argv);
+        exit(1);
+    } else {
+        waitpid(pid, &status, 0);
+        int st = WEXITSTATUS(status);
+        if (WEXITSTATUS(status) == 2) {
+            scoreFlag = 4;
+        } else if (WEXITSTATUS(status) == 3) {
+            scoreFlag = 5;
+        } else if (WEXITSTATUS(status) == 1) {
+            scoreFlag = 6;
+        }
+        return getScore(scoreFlag);
+    }
+}
+
+int getScore(int flag) {
+    if (flag == 2) {
+        return 10;
+    } else if (flag == 3) {
+        return 20;
+    } else if (flag == 4) {
+        return 50;
+    } else if (flag == 5) {
+        return 75;
+    } else if (flag == 6) {
+        return 100;
     }
 }
 
@@ -180,18 +277,18 @@ void readArgFile(int dirFile, char *pathToDir[150], char *pathToInput[150], char
             } else if (lineNumber == 2) {
                 *pathToOutput = copyLine(buffer, j, tabsCounter);
             }
-            lineNumber ++;
+            lineNumber++;
             j = tabsCounter + 1;
         }
         tabsCounter++;
     }
 }
 
-char* copyLine(char *buffer,int j, int tabsCounter) {
+char *copyLine(char *buffer, int j, int tabsCounter) {
 
     int i = 0;
     int numOfTabs = tabsCounter - j;
-    char* lineToReturn = (char*)malloc(sizeof(char) * (tabsCounter - j + 1));
+    char *lineToReturn = (char *) malloc(sizeof(char) * (tabsCounter - j + 1));
     for (i = 0; i < numOfTabs; i++) {
         lineToReturn[i] = buffer[j + i];
     }

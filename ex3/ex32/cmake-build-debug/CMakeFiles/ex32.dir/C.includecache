@@ -21,4 +21,8 @@ string.h
 -
 sys/stat.h
 -
+wait.h
+-
+time.h
+-
 
