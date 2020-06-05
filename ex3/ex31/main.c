@@ -4,7 +4,7 @@
 #include <sys/stat.h>
 #include <unistd.h>
 
-int checkFiles(char *file1, char *file2, int file1_size, int file2_size);
+int checkFiles(long int file1, long int file2, int file1_size, int file2_size);
 
 int checkCorrespondence(char buff1[1024], char buff2[1024], int size1, int size2);
 
@@ -77,7 +77,7 @@ int checkCorrespondence(char buff1[1024], char buff2[1024], int size1, int size2
 }
 
 // might be identical / similar / different
-int checkFiles(char *file1, char *file2, int file1_size, int file2_size) {
+int checkFiles(long int file1, long int file2, int file1_size, int file2_size) {
     int flag; // locally: 1 - identical, 3 - similar, 2 - different
     int matches = 0, maxMatches = 0, matchesCounter = 0, maxBufSize = 0;
     int i = 0, j = 0, minFileSize, maxFileSize;

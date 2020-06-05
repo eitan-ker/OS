@@ -22,13 +22,13 @@ int compileAndScore(char *pathToInput, char *pathToOutput, struct dirent *inDir,
 
 int compile(char *fileInsideDIr, char *fileTxtOutput, char *pathToInput, char *pathToOutput);
 
-int getScore(int flag);
+int getGrade(int flag);
 
 int runCompiled(char *fileTxtOutput, char *pathToInput, char *pathToOutput);
 
 int TestComp(char *fileTxtOutput, char *pathToOutput);
 
-void printScore(int score);
+void printScore(int grade, char *dir, int resultFile);
 
 int main(int argc, char *argv[]) {
     char *pathToDir;
@@ -36,7 +36,7 @@ int main(int argc, char *argv[]) {
     char *pathToOutput;
     int dirFile = open(argv[1], O_RDONLY);
     if (dirFile == -1) {
-        fprintf(stderr, "could not open file");
+        fprintf(stderr, "could not open file\n");
         return -1;
     }
     // get path from first line - doesn't have to be only only c files, search by .c
@@ -70,16 +70,17 @@ void startTest(char *pathToDir, char *pathToInput, char *pathToOutput) {
     struct stat fileStat;
     DIR *homeDir = opendir(pathToDir);
     DIR *insideHomeDir;
-    int score = 0;
+    int grade = 0;
     if (!homeDir) {
-        fprintf(stderr, "error in system call");
+        fprintf(stderr, "error in system call\n");
         exit(1);
     }
-    int file = open("result.csv", O_RDWR | O_CREAT, S_IRUSR | S_IWUSR | S_IWGRP | S_IWOTH);
-    if (file == -1) {
+    int resultFile = open("result.csv", O_RDWR | O_CREAT, S_IRUSR | S_IWUSR | S_IWGRP | S_IWOTH);
+    if (resultFile == -1) {
         fprintf(stderr, "could not open file\n");
         exit(1);
     }
+    // for each dir inside the pathToDir it runs the testing for the grade
     while ((firstDir = readdir(homeDir)) != NULL) {
         char *dir = firstDir->d_name;
         if ((strcmp(firstDir->d_name, "..") == 0) || (strcmp(firstDir->d_name, ".") == 0)) {
@@ -94,31 +95,66 @@ void startTest(char *pathToDir, char *pathToInput, char *pathToOutput) {
             strcat(fileInsideDir, firstDir->d_name);
             // open inside Dir
             if (stat(fileInsideDir, &fileStat) == -1) {
-                fprintf(stderr, "could not open file");
+                fprintf(stderr, "could not open file\n");
             }
             insideHomeDir = opendir(fileInsideDir);
             if (!insideHomeDir) {
-                fprintf(stderr, "error in system call");
+                fprintf(stderr, "error in system call\n");
                 exit(1);
             }
             // search for c files
-            score = searchCFilesReturnScore(insideHomeDir, pathToInput, pathToOutput,
+            grade = searchCFilesReturnScore(insideHomeDir, pathToInput, pathToOutput,
                                             fileInsideDir); //score result from files
             // write score for file
-            printScore(score);
+            printScore(grade, dir, resultFile);
         }
     }
 
 }
 
-void printScore(int score) {
+void printScore(int grade, char *dir, int resultFile) {
+    // supposed to be create from the same place the program runs
+    char stringToPrint[1024];;
+    int length;
+    char* sGrade;
+    char* wGrade;
 
+    strcpy(stringToPrint, dir);
+    strcat(stringToPrint, ",");
+    if (grade == 0) {
+        sGrade = "0";
+        wGrade = "NO_C_FILE";
+    } else if (grade == 10) {
+        sGrade = "10";
+        wGrade = "COMPILATION_ERROR";
+    } else if (grade == 20) {
+        sGrade = "20";
+        wGrade = "TIMEOUT";
+    } else if (grade == 50) {
+        sGrade = "50";
+        wGrade = "WRONG";
+    } else if (grade == 75) {
+        sGrade = "75";
+        wGrade = "SIMILAR";
+    } else if (grade == 100) {
+        sGrade = "100";
+        wGrade = "EXCELLENT";
+    }
+    strcat(stringToPrint, sGrade);
+    strcat(stringToPrint, ",");
+    strcat(stringToPrint, wGrade);
+    strcat(stringToPrint, "\n");
+    length = write(resultFile, stringToPrint, strlen(stringToPrint));
+    if (length != strlen(stringToPrint)) {
+        fprintf(stderr, "error in system call\n");
+        exit(1);
+    }
 }
+
 
 int searchCFilesReturnScore(DIR *insideHomeDir, char *pathToInput,
                             char *pathToOutput, char *fileInsideDIr) {
     struct dirent *inDir;
-
     int fileNameLength = 0;
     int cFileFlag = 0;
     while ((inDir = readdir(insideHomeDir)) != NULL) {
@@ -148,7 +184,6 @@ int searchCFilesReturnScore(DIR *insideHomeDir, char *pathToInput,
 
 int compileAndScore(char *pathToInput, char *pathToOutput, struct dirent *inDir,
                     char *fileInsideDIr, char *file) {
-    char fileExe[150];
     char fileTxtOutput[150];
     // make the result file
     strcpy(fileTxtOutput, "./");
@@ -167,7 +202,7 @@ int compileAndScore(char *pathToInput, char *pathToOutput, struct dirent *inDir,
 int compile(char *fileInsideDIr, char *fileTxtOutput, char *pathToInput, char *pathToOutput) {
     pid_t pid;
     int status = 0;
-    int scoreFlag = 0;
+    int gradeFlag = 0;
     if ((pid = fork()) == 0) {
         char *argv[3];
         argv[0] = "gcc";
@@ -178,8 +213,8 @@ int compile(char *fileInsideDIr, char *fileTxtOutput, char *pathToInput, char *p
     } else {
         waitpid(pid, &status, 0);
         if (WEXITSTATUS(status) == 1) {
-            scoreFlag = 2; // second condition for compilation error
-            return getScore(scoreFlag);
+            gradeFlag = 2; // second condition for compilation error
+            return getGrade(gradeFlag);
         }
         // compilation succeeded
         return runCompiled(fileTxtOutput, pathToInput, pathToOutput);
@@ -188,14 +223,14 @@ int compile(char *fileInsideDIr, char *fileTxtOutput, char *pathToInput, char *p
 
 int runCompiled(char *fileTxtOutput, char *pathToInput, char *pathToOutput) {
     int input, txtOutput, status = 0;
-    int scoreFlag = 0;
-    int score = 0;
+    int gradeFlag = 0;
+    int grade = 0;
     pid_t pid;
     time_t beforeExec, afterExec;
     input = open(fileTxtOutput, O_RDWR | O_CREAT, S_IRUSR | S_IWUSR | S_IWGRP | S_IWOTH);
     txtOutput = open(pathToInput, O_RDONLY);
     if ((input == -1) || (txtOutput == -1)) {
-        fprintf(stderr, "error in system call");
+        fprintf(stderr, "error in system call\n");
         exit(1);
     }
     if (pid = fork() == 0) {
@@ -214,20 +249,20 @@ int runCompiled(char *fileTxtOutput, char *pathToInput, char *pathToOutput) {
         time(&afterExec);
         double deltaTime = afterExec - beforeExec;
         if (deltaTime > 3) {
-            scoreFlag = 3;
-            return getScore(scoreFlag);
+            gradeFlag = 3;
+            return getGrade(gradeFlag);
         }
-        score = TestComp(fileTxtOutput, pathToOutput);
+        grade = TestComp(fileTxtOutput, pathToOutput);
         close(input);
         close(txtOutput);
-        return score;
+        return grade;
     }
 }
 
 int TestComp(char *fileTxtOutput, char *pathToOutput) {
     pid_t pid;
     int status = 0;
-    int scoreFlag = 0;
+    int gradeFlag = 0;
     if (pid = fork() == 0) {
         char *argv[4];
         argv[0] = "comp.out";
@@ -240,26 +275,26 @@ int TestComp(char *fileTxtOutput, char *pathToOutput) {
         waitpid(pid, &status, 0);
         int st = WEXITSTATUS(status);
         if (WEXITSTATUS(status) == 2) {
-            scoreFlag = 4;
+            gradeFlag = 4;
         } else if (WEXITSTATUS(status) == 3) {
-            scoreFlag = 5;
+            gradeFlag = 5;
         } else if (WEXITSTATUS(status) == 1) {
-            scoreFlag = 6;
+            gradeFlag = 6;
         }
-        return getScore(scoreFlag);
+        return getGrade(gradeFlag);
     }
 }
 
-int getScore(int flag) {
-    if (flag == 2) {
+int getGrade(int gradeFlag) {
+    if (gradeFlag == 2) {
         return 10;
-    } else if (flag == 3) {
+    } else if (gradeFlag == 3) {
         return 20;
-    } else if (flag == 4) {
+    } else if (gradeFlag == 4) {
         return 50;
-    } else if (flag == 5) {
+    } else if (gradeFlag == 5) {
         return 75;
-    } else if (flag == 6) {
+    } else if (gradeFlag == 6) {
         return 100;
     }
 }
