@@ -1,5 +1,3 @@
-# Eitan Kerzhner
-# 205697139
 // Eitan Kerzhner
 // 205697139
 

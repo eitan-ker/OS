@@ -1,0 +1,3 @@
+/home/eizzker/Desktop/OS/ex3/ex32/cmake-build-debug/CMakeFiles/rebuild_cache.dir
+/home/eizzker/Desktop/OS/ex3/ex32/cmake-build-debug/CMakeFiles/ex32.dir
+/home/eizzker/Desktop/OS/ex3/ex32/cmake-build-debug/CMakeFiles/edit_cache.dir
