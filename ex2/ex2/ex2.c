@@ -1,5 +1,7 @@
 # Eitan Kerzhner
 # 205697139
+// Eitan Kerzhner
+// 205697139
 
 #include <stdio.h>
 #include <stdbool.h>
@@ -232,8 +234,6 @@ void exec(char *command[100], history *hisComm[100], int hisCommIter, int backFl
     //‪execv‬‬
     int status;
     pid_t pid;
-    int i;
-    int size = strlen(command[1]);
     if ((pid = fork()) < 0) { // error
         fprintf(stderr, "Error in system call");
         printf("\n");
