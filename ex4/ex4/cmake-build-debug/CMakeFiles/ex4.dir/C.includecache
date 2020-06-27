@@ -1,0 +1,32 @@
+#IncludeRegexLine: ^[ 	]*[#%][ 	]*(include|import)[ 	]*[<"]([^">]+)([">])
+
+#IncludeRegexScan: ^.*$
+
+#IncludeRegexComplain: ^$
+
+#IncludeRegexTransform: 
+
+/home/eizzker/Desktop/OS/ex4/ex4/osqueue.h
+
+/home/eizzker/Desktop/OS/ex4/ex4/threadPool.c
+stdio.h
+-
+pthread.h
+-
+threadPool.h
+/home/eizzker/Desktop/OS/ex4/ex4/threadPool.h
+
+/home/eizzker/Desktop/OS/ex4/ex4/threadPool.h
+sys/types.h
+-
+osqueue.h
+/home/eizzker/Desktop/OS/ex4/ex4/osqueue.h
+stdlib.h
+-
+stdio.h
+-
+pthread.h
+-
+unistd.h
+-
+

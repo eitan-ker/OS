@@ -316,6 +316,9 @@ void readArgFile(int dirFile, char *pathToDir[150], char *pathToInput[150], char
     char buffer[450];
     int fileReader = 0, tabsCounter = 0, lineNumber = 0, j = 0;
     fileReader = read(dirFile, buffer, 150);
+
+    // if read fail
+    
     while (tabsCounter < fileReader) {
         if (buffer[tabsCounter] == '\n') {
             if (lineNumber == 0) {
